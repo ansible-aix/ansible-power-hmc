@@ -158,6 +158,15 @@ def validate_proc_mem(system_dom, proc, mem):
     if mem > int_avail_mem:
         raise HmcError("Available system memory is not enough. Provide value on or below {0}".format(curr_avail_mem))
 
+def verify_missing_parameter(params):
+    for par_key in params:
+        par_val = params.get(par_key)
+        if isinstance(par_val,dict):
+            continue
+        else:
+            if not par_val:
+                raise ParameterError("mandatory parameter '"+ par_key +"' is missing")
+
 
 def create_partition(module, params):
     changed = False
@@ -166,6 +175,7 @@ def create_partition(module, params):
     session = None
     system_uuid = None
     server_dom = None
+    verify_missing_parameter(params)
     hmc_host = params['hmc_host']
     hmc_user = params['hmc_auth']['userid']
     password = params['hmc_auth']['password']
@@ -174,6 +184,8 @@ def create_partition(module, params):
     proc = params['proc']
     mem = params['mem']
     os_type = params['os_type']
+
+
 
     cli_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(cli_conn)
