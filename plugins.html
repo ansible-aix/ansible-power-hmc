@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Demo &mdash; IBM Power Systems HMC 1.0.0-beta1 documentation</title>
+  <title>Plugins &mdash; IBM Power Systems HMC 1.0.0-beta1 documentation</title>
   
 
   
@@ -38,8 +38,8 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Contributing" href="community_guides.html" />
-    <link rel="prev" title="Playbooks" href="playbooks.html" /> 
+    <link rel="next" title="powervm_inventory – HMC-based inventory source for Power Systems" href="plugins/powervm_inventory.html" />
+    <link rel="prev" title="powervm_lpar_instance – Create/Delete an AIX/Linux or IBMi partition" href="modules/powervm_lpar_instance.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -92,21 +92,15 @@
 <p class="caption"><span class="caption-text">References</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="plugins.html">Plugins</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Plugins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#plugin-reference">Plugin reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="plugins/powervm_inventory.html">powervm_inventory – HMC-based inventory source for Power Systems</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Demo</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#hmc-update-upgrade">hmc_update_upgrade</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#update">Update</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#upgrade">Upgrade</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#hmc-pwdpolicy">hmc_pwdpolicy</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#create-and-activate">Create and Activate</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#deactivate-modify-and-activate">Deactivate, Modify and Activate</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="demo.html">Demo</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Community Guides</span></p>
 <ul>
@@ -166,14 +160,14 @@
     
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Demo</li>
+      <li>Plugins</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
             
-              <a href="https://github.com/IBM/ansible-power-hmc/blob/dev-collection/docs/source/demo.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/IBM/ansible-power-hmc/blob/dev-collection/docs/source/plugins.rst" class="fa fa-github"> Edit on GitHub</a>
             
           
         
@@ -187,46 +181,20 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="demo">
-<h1>Demo<a class="headerlink" href="#demo" title="Permalink to this headline">¶</a></h1>
-<p>Following set of example scenarios demonstrate how to use the modules of the
-<strong>IBM Power Systems HMC collection</strong> content</p>
-<div class="section" id="hmc-update-upgrade">
-<h2>hmc_update_upgrade<a class="headerlink" href="#hmc-update-upgrade" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="update">
-<h3>Update<a class="headerlink" href="#update" title="Permalink to this headline">¶</a></h3>
-<p>The following gif demonstrates the update of a HMC from V9 R1 M910 to V9 R1 M941
-using disk source which takes the image from control node.</p>
-<div class="figure align-default">
-<img alt="" src="_images/demo_hmc_update.gif" />
-</div>
-</div>
-<div class="section" id="upgrade">
-<h3>Upgrade<a class="headerlink" href="#upgrade" title="Permalink to this headline">¶</a></h3>
-<p>The following gif demonstrates the upgrade of a HMC from V8 R870 to V9 R1 M910
-through NFS server.</p>
-<div class="figure align-default">
-<img alt="" src="_images/demo_hmc_upgrade.gif" />
-</div>
-</div>
-</div>
-<div class="section" id="hmc-pwdpolicy">
-<h2>hmc_pwdpolicy<a class="headerlink" href="#hmc-pwdpolicy" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="create-and-activate">
-<h3>Create and Activate<a class="headerlink" href="#create-and-activate" title="Permalink to this headline">¶</a></h3>
-<p>The following gif demonstrates the creating of HMC password policy and
-activating it.</p>
-<div class="figure align-default">
-<img alt="" src="_images/demo_password_policy_create.gif" />
-</div>
-</div>
-<div class="section" id="deactivate-modify-and-activate">
-<h3>Deactivate, Modify and Activate<a class="headerlink" href="#deactivate-modify-and-activate" title="Permalink to this headline">¶</a></h3>
-<p>The following gif demonstrates the deactivating the active HMC password
-policy then modify and activate it.</p>
-<div class="figure align-default">
-<img alt="" src="_images/demo_password_policy_modify.gif" />
-</div>
+  <div class="section" id="plugins">
+<h1>Plugins<a class="headerlink" href="#plugins" title="Permalink to this headline">¶</a></h1>
+<p>The <strong>IBM Power Systems HMC collection</strong> contains plugins that can be used in a playbook
+to automate tasks using HMC. Ansible executes each tasks on the target node and
+returns the result back to the controller.</p>
+<div class="section" id="plugin-reference">
+<h2>Plugin reference<a class="headerlink" href="#plugin-reference" title="Permalink to this headline">¶</a></h2>
+<p>Reference material for each plugin contains documentation on the accepted
+parameters and their expected values.</p>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="plugins/powervm_inventory.html">powervm_inventory – HMC-based inventory source for Power Systems</a></li>
+</ul>
 </div>
 </div>
 </div>
@@ -239,10 +207,10 @@ policy then modify and activate it.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="community_guides.html" class="btn btn-neutral float-right" title="Contributing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="plugins/powervm_inventory.html" class="btn btn-neutral float-right" title="powervm_inventory – HMC-based inventory source for Power Systems" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="playbooks.html" class="btn btn-neutral float-left" title="Playbooks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="modules/powervm_lpar_instance.html" class="btn btn-neutral float-left" title="powervm_lpar_instance – Create/Delete an AIX/Linux or IBMi partition" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
