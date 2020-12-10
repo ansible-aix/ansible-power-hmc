@@ -203,11 +203,9 @@
 </div>
 <div class="section" id="synopsis">
 <h2><a class="toc-backref" href="#id1">Synopsis</a><a class="headerlink" href="#synopsis" title="Permalink to this headline">¶</a></h2>
-<p>This plugin makes use of HMC APIs to build a dynamic inventory of defined partitions (LPAR, VIOS).</p>
-<p>Power HMC inventory sources must be structured as name.power_hmc.yml or name.power_hmc.yaml.</p>
+<p>This plugin utilizes HMC APIs to build a dynamic inventory of defined partitions (LPAR, VIOS). Inventory sources must be structured as name.power_hmc.yml or name.power_hmc.yaml.</p>
 <p>To create a usable Ansible host for a given LPAR, the ip or hostname of the LPAR must be exposed through the HMC in some way. Currently there are only 2 such sources supported by this tool, an RMC ip address or the name of the LPAR must be a valid hostname.</p>
-<p>Like with other dynamic inventories Ansible grouping methods and composite variables can be used.</p>
-<p>Possible values can be found in the HMC REST API documentation in Knowledge Center under the sections “Logical Partition” and “Virtual IO Server”. By default properties listed as “Quick Properties” can be used, but if advanced fields are enabled you may use properties from the extended “Advanced” group for LPARs and VIOS.</p>
+<p>Valid LPAR/VIOS properties that can be used for groups, keyed groups, filters, unknown partition identification, and composite variables can be found in the HMC REST API documentation. By default, valid properties include those listed as “Quick Properties”, but if <cite>advanced_fields</cite> are enabled you may use properties included in the “Advanced” group as well.</p>
 </div>
 <div class="section" id="requirements">
 <h2><a class="toc-backref" href="#id2">Requirements</a><a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
@@ -220,12 +218,17 @@
 <h2><a class="toc-backref" href="#id3">Parameters</a><a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
 <blockquote>
 <div><dl>
-<dt>hmc_hosts (True, any, None)</dt><dd><p>A dictionary of hosts and their associated usernames and passwords.</p>
+<dt>hmc_hosts (True, dict, None)</dt><dd><p>A dictionary of hosts and their associated usernames and passwords.</p>
 </dd>
-<dt>filters (optional, any, {})</dt><dd><p>A key value pair for filtering by various LPAR attributes. Only results matching the filter will be included in the inventory.</p>
-<p>Possible filtering values can be found in the HMC REST API documentation in Knowledge Center under the sections “Logical Partition” and “Virtual IO Server”. By default properties listed as “Quick Properties” can be used, but if advanced fields are enabled you may use properties from the extended “Advanced” group for LPARs and VIOS.</p>
+<dt>filters (optional, any, {})</dt><dd><p>A key value pair for filtering by various LPAR/VIOS attributes. Only results matching the filter will be included in the inventory.</p>
 </dd>
-<dt>exclude_ip (optional, list, [])</dt><dd><p>A list of IP addresses to exclude from the inventory. This will be compared to the RMC ip address specified in the HMC.</p>
+<dt>compose (optional, dict, {})</dt><dd><p>Create vars from jinja2 expressions.</p>
+</dd>
+<dt>groups (optional, dict, {})</dt><dd><p>Add hosts to group based on Jinja2 conditionals.</p>
+</dd>
+<dt>keyed_groups (optional, list, [])</dt><dd><p>Add hosts to group based on the values of a variable.</p>
+</dd>
+<dt>exclude_ip (optional, list, [])</dt><dd><p>A list of IP addresses to exclude from the inventory. This will be compared to the RMC ip address specified in the HMC. Currently, no hostname lookup is performed, so only ip addresses that match the RMC ip address specified in the HMC will be exlcuded.</p>
 </dd>
 <dt>exclude_lpar (optional, list, [])</dt><dd><p>A list of partitions (LPAR, VIOS) to exclude by partition name.</p>
 </dd>
@@ -236,15 +239,13 @@
 <dt>ansible_host_type (optional, str, ip)</dt><dd><p>Determines if the ip address or the LPAR name will be used as the “ansible_host” variable in playbooks.</p>
 </dd>
 <dt>advanced_fields (optional, bool, False)</dt><dd><p>Allows for additional LPAR/VIOS properties to be used for the purposes of grouping and filtering.</p>
-<p>Retrieving these properties requires a significantly slower REST call to HMC APIs. Depending on the size of your environment, it could increase dynamic inventory generation time by a factor of ten.</p>
+<p>Retrieving these properties requires a significantly slower call to HMC APIs. Depending on the size of your environment, it could increase dynamic inventory generation run time dramatically.</p>
 </dd>
 <dt>group_by_managed_system (optional, bool, True)</dt><dd><p>Creates a grouping of partitions by managed system name. This is enabled by default.</p>
 </dd>
 <dt>identify_unknown_by (optional, str, omit)</dt><dd><p>Allows you to include partitions unable to be automatically detected as a valid Ansible target.</p>
-<p>By default, partitions without ip’s are ommited from the inventory. This may not be the case in the event you have lpar_name set for ansible_host_type.</p>
-<p>If not omitted partitions will be added to a group called “unknown” and will can be identified by any LPAR property of your choosing (PartitionName or UUID are common identifiers).</p>
-<p>If you do not omit unknown partitions, you may run into issues targetting groups that include them. To avoid this you can specify a host pattern in a playbooks such as “targetgroup:!unknown”. This will your playbook to run against all known hosts in your target group.</p>
-<p>Possible LPAR property values can be found in the HMC REST API documentation in Knowledge Center under the sections “Logical Partition” and “Virtual IO Server”. By default properties listed as “Quick Properties” can be used, but if advanced fields are enabled you may use properties from the extended “Advanced” group for LPARs and VIOS.</p>
+<p>By default, partitions without ip’s are ommited from the inventory. This is not be the case in the event you have lpar_name set for ansible_host_type. If not, omitted partitions will be added to a group called “unknown” and will can be identified by any LPAR property of your choosing (PartitionName or UUID are common identifiers).</p>
+<p>If you do not omit unknown partitions, you may run into issues targetting groups that include them. To avoid this you can specify a host pattern in a playbooks such as <cite>targetgroup:!unknown</cite>. This will your playbook to run against all known hosts in your target group.</p>
 </dd>
 </dl>
 </div></blockquote>
