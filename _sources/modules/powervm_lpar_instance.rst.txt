@@ -55,15 +55,11 @@ Parameters
 
 
   proc (optional, int, None)
-    The number of dedicated processors to create partition
-
-    Default value is 2
+    The number of dedicated processors to create partition Default value is 2
 
 
   mem (optional, int, None)
-    The value of dedicated memory value in megabytes to create partition
-
-    Default value is 1024
+    The value of dedicated memory value in megabytes to create partition Default value is 1024
 
 
   os_type (optional, str, None)
@@ -91,7 +87,7 @@ Notes
 -----
 
 .. note::
-   - Currently supports creation of partition (powervm instance) with only processor and memory settings in dedicated mode
+   - Currently supports creation of partition (powervm instance) with only processor and memory settings
 
 
 
@@ -114,31 +110,6 @@ Examples
           mem: 20480
           os_type: ibmi
           state: present
-
-
-    - name: Create an AIX/Linux logical partition instance with default proc and mem values
-      powervm_lpar_instance:
-          hmc_host: '{{ inventory_hostname }}'
-          hmc_auth:
-             username: '{{ ansible_user }}'
-             password: '{{ hmc_password }}'
-          system_name: <system_name>
-          vm_name: <vm_name>
-          proc:
-          mem:
-          os_type: aix_linux
-          state: present
-
-
-    - name: Delete a logical partition instance
-      powervm_lpar_instance:
-          hmc_host: '{{ inventory_hostname }}'
-          hmc_auth:
-             username: '{{ ansible_user }}'
-             password: '{{ hmc_password }}'
-          system_name: <system_name>
-          vm_name: <vm_name>
-          state: absent
 
 
 
@@ -169,5 +140,4 @@ Authors
 ~~~~~~~
 
 - Anil Vijayan (@AnilVijayan)
-- Navinakumar Kandakur (@nkandak1)
 
