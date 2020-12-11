@@ -258,7 +258,7 @@
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <ul class="simple">
-<li><p>Currently supports creation of partition (powervm instance) with only processor and memory settings</p></li>
+<li><p>Currently supports creation of partition (powervm instance) with only processor and memory settings on dedicated mode</p></li>
 </ul>
 </div>
 </div>
@@ -276,6 +276,27 @@
       <span class="nt">mem</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">20480</span>
       <span class="nt">os_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ibmi</span>
       <span class="nt">state</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">present</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Create an AIX/Linux logical partition instance with default proc and mem values</span>
+  <span class="nt">powervm_lpar_instance</span><span class="p">:</span>
+      <span class="nt">hmc_host</span><span class="p">:</span> <span class="s">&#39;</span><span class="cp">{{</span> <span class="nv">inventory_hostname</span> <span class="cp">}}</span><span class="s">&#39;</span>
+      <span class="nt">hmc_auth</span><span class="p">:</span>
+         <span class="nt">username</span><span class="p">:</span> <span class="s">&#39;</span><span class="cp">{{</span> <span class="nv">ansible_user</span> <span class="cp">}}</span><span class="s">&#39;</span>
+         <span class="nt">password</span><span class="p">:</span> <span class="s">&#39;</span><span class="cp">{{</span> <span class="nv">hmc_password</span> <span class="cp">}}</span><span class="s">&#39;</span>
+      <span class="nt">system_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;system_name&gt;</span>
+      <span class="nt">vm_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;vm_name&gt;</span>
+      <span class="nt">os_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">aix_linux</span>
+      <span class="nt">state</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">present</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Delete a logical partition instance</span>
+  <span class="nt">powervm_lpar_instance</span><span class="p">:</span>
+      <span class="nt">hmc_host</span><span class="p">:</span> <span class="s">&#39;</span><span class="cp">{{</span> <span class="nv">inventory_hostname</span> <span class="cp">}}</span><span class="s">&#39;</span>
+      <span class="nt">hmc_auth</span><span class="p">:</span>
+         <span class="nt">username</span><span class="p">:</span> <span class="s">&#39;</span><span class="cp">{{</span> <span class="nv">ansible_user</span> <span class="cp">}}</span><span class="s">&#39;</span>
+         <span class="nt">password</span><span class="p">:</span> <span class="s">&#39;</span><span class="cp">{{</span> <span class="nv">hmc_password</span> <span class="cp">}}</span><span class="s">&#39;</span>
+      <span class="nt">system_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;system_name&gt;</span>
+      <span class="nt">vm_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;vm_name&gt;</span>
+      <span class="nt">state</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">absent</span>
 </pre></div>
 </div>
 </div>
