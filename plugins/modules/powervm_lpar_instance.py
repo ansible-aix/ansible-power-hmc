@@ -17,12 +17,14 @@ DOCUMENTATION = '''
 module: powervm_lpar_instance
 author:
     - Anil Vijayan (@AnilVijayan)
-short_description: Create/Delete an AIX/Linux or IBMi partition
+    - Navinakumar Kandakur (@nkandak1)
+short_description: Create, Delete and shutdown an AIX/Linux or IBMi partition
 notes:
     - Currently supports creation of partition (powervm instance) with only processor and memory settings on dedicated mode
 description:
     - "Creates AIX/Linux or IBMi partition with specified configuration details on mentioned system"
     - "Or Deletes specified AIX/Linux or IBMi partition on specified system"
+    - "Or Shutdown specified AIX/Linux or IBMi partition on specified system"
 
 version_added: "1.1.0"
 requirements:
@@ -83,6 +85,9 @@ options:
         required: true
         type: str
         choices: ['present', 'absent']
+    action:
+        description:
+            - C(shutdown) shutdown a partition of specified I(vm_name) on specified I(system_name)
 '''
 
 EXAMPLES = '''
@@ -119,6 +124,16 @@ EXAMPLES = '''
       system_name: <system_name>
       vm_name: <vm_name>
       state: absent
+
+- name: Shutdown a logical partition
+  powervm_lpar_instance:
+      hmc_host: '{{ inventory_hostname }}'
+      hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+      system_name: <system_name>
+      vm_name: <vm_name>
+      action: shutdown
 '''
 
 RETURN = '''
@@ -136,6 +151,7 @@ partition_info:
 '''
 
 import sys
+import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_cli_client import HmcCliConnection
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_resource import Hmc
@@ -395,16 +411,80 @@ def remove_partition(module, params):
 
     return changed, None
 
+def poweroff_partition(module, params):
+    changed = False
+    rest_conn = None
+    system_uuid = None
+    lpar_uuid = None
+    validate_parameters(params)
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    system_name = params['system_name']
+    vm_name = params['vm_name']
+
+    try:
+        rest_conn = HmcRestClient(hmc_host, hmc_user, password)
+    except Exception as error:
+        logger.debug(repr(error))
+        module.fail_json(msg="Logon to HMC failed")
+
+    try:
+        system_uuid, server_dom = rest_conn.getManagedSystem(system_name)
+        if not system_uuid:
+           module.fail_json(msg="Given system is not present")
+
+        lpar_response = rest_conn.getLogicalPartitionsQuick(system_uuid)
+        if lpar_response:
+            lpar_quick_list = json.loads(rest_conn.getLogicalPartitionsQuick(system_uuid))
+
+        if lpar_quick_list:
+            for eachLpar in lpar_quick_list:
+                if eachLpar['PartitionName'] == vm_name:
+                    partition_dict = eachLpar
+                    lpar_uuid = eachLpar['UUID']
+                    break
+
+        if not lpar_uuid:
+           module.fail_json(msg="Given Logical Partition is not present on given system")
+
+        partition_state = partition_dict["PartitionState"]
+
+        if partition_state == 'not activated':
+           logger.debug("Given partition already in not activated state")
+           return False, None
+        else:
+           rest_conn.poweroffPartition(lpar_uuid, 'shutdown')
+           changed = True
+
+    except Exception as error:
+        error_msg = parse_error_response(error)
+        logger.debug("Line number: %d exception: %s", sys.exc_info()[2].tb_lineno, repr(error))
+        module.fail_json(msg=error_msg)
+    finally:
+        try:
+            rest_conn.logoff()
+        except Exception as logoff_error:
+            error_msg = parse_error_response(logoff_error)
+            module.warn(error_msg)
+
+    return changed, None
+
 
 def perform_task(module):
     params = module.params
     actions = {
         "present": create_partition,
-        "absent": remove_partition
+        "absent": remove_partition,
+        "shutdown" : poweroff_partition
     }
 
+    oper = 'state'
+    if params['state'] == None:
+        oper = 'action'
+
     try:
-        return actions[params['state']](module, params)
+        return actions[params[oper]](module, params)
     except (ParameterError, HmcError, Error) as error:
         return False, repr(error)
 
@@ -427,15 +507,21 @@ def run_module():
         proc=dict(type='int'),
         mem=dict(type='int'),
         os_type=dict(type='str', choices=['aix', 'linux', 'aix_linux', 'ibmi']),
-        state=dict(required=True, type='str',
-                   choices=['present', 'absent'])
+        state=dict(type='str',
+                   choices=['present', 'absent']),
+        action=dict(type='str',
+                    choices=['shutdown'])
     )
 
     module = AnsibleModule(
         argument_spec=module_args,
+        mutually_exclusive=[('state', 'action')],
+        required_one_of=[('state', 'action')],
         required_if=[['state', 'absent', ['hmc_host', 'hmc_auth', 'system_name', 'vm_name']],
-                     ['state', 'present', ['hmc_host', 'hmc_auth', 'system_name', 'vm_name', 'os_type']]
+                     ['state', 'present', ['hmc_host', 'hmc_auth', 'system_name', 'vm_name', 'os_type']],
+                     ['action', 'shutdown', ['hmc_host', 'hmc_auth', 'system_name', 'vm_name']]
                      ]
+
 
     )
 

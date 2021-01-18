@@ -216,7 +216,8 @@ class HmcRestClient:
         else:
             url = "https://{0}/rest/api/uom/jobs/{1}".format(self.hmc_ip, jobId)
 
-        header = {'X-API-Session': self.session}
+        header = {'X-API-Session': self.session,
+                  'Accept': "application/atom+xml"}
         result = None
 
         jobStatus = ''
@@ -645,3 +646,31 @@ class HmcRestClient:
         transform_resp = xml_strip_namespace(resp)
         jobID = transform_resp.xpath('//JobID')[0].text
         return self.fetchJobStatus(jobID, template=True, ignoreSearch=True)
+
+    def poweroffPartition(self, vm_uuid, operation, immediate = 'false'):
+        url = "https://{0}/rest/api/uom/LogicalPartition/{1}/do/PowerOff".format(self.hmc_ip, vm_uuid)
+        header = _jobHeader(self.session)
+
+        reqdOperation = {'OperationName': 'PowerOff',
+                         'GroupName': 'LogicalPartition',
+                         'ProgressType': 'DISCRETE'}
+    
+        jobParams = {'immediate': immediate,
+                     'restart': 'false', 
+                     'operation': operation}
+
+        payload = _job_RequestPayload(reqdOperation, jobParams)
+
+        resp = open_url(url,
+                        headers=header,
+                        data=payload,
+                        method='PUT',
+                        validate_certs=False,
+                        force_basic_auth=True,
+                        timeout=30).read()
+
+        shutdown_resp = xml_strip_namespace(resp)
+        jobID = shutdown_resp.xpath('//JobID')[0].text
+        return self.fetchJobStatus(jobID, ignoreSearch=True)
+
+
