@@ -25,6 +25,7 @@ description:
     - "Creates AIX/Linux or IBMi partition with specified configuration details on mentioned system"
     - "Or Deletes specified AIX/Linux or IBMi partition on specified system"
     - "Or Shutdown specified AIX/Linux or IBMi partition on specified system"
+    - "Or Poweron specified AIX/Linux or IBMi partition with specified configuration details on specified system"
 
 version_added: "1.1.0"
 requirements:
@@ -78,6 +79,24 @@ options:
             - C(ibmi) for IBMi operating system
         type: str
         choices: ['aix','linux','aix_linux','ibmi']
+    prof_name:
+        description:
+            - Partition profile needs to be used to activate
+            - If user doesn't pass this option, current configureation profile will be considered
+        type: str
+    keylock:
+        description:
+            - The keylock position to set.
+            - If user doesn't provide this option, current settings of this option in partition will be considered.
+        type: str
+        choices: ['manual', 'norm']
+    iIPLsource:
+        description:
+            - The inital program load (IPL) source to use when activating an IBMi partition.
+            - If user doesn't provide this option, current setting of this option in partition will be considered.
+            - If this option provided to AIX/Linux type partition, operation gives a warning and then ignores this option and proceed with operation.
+        type: str
+        choices: ['a','b','c','d']
     state:
         description:
             - C(present) creates a partition of specifed I(os_type), I(vm_name), I(proc) and I(memory) on specified I(system_name)
@@ -88,6 +107,7 @@ options:
     action:
         description:
             - C(shutdown) shutdown a partition of specified I(vm_name) on specified I(system_name)
+            - C(poweron) poweron a partition of specified I(vm_name) with spefified I(prof_name), I(keylock), I(iIPLsource) on specified I(system_name)
 '''
 
 EXAMPLES = '''
@@ -134,6 +154,30 @@ EXAMPLES = '''
       system_name: <system_name>
       vm_name: <vm_name>
       action: shutdown
+
+- name: Activate a AIX/Linux logical partition with user defined profile_name
+  powervm_lpar_instance:
+      hmc_host: '{{ inventory_hostname }}'
+      hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+      system_name: <system_name>
+      vm_name: <vm_name>
+      prof_name: <profile_name>
+      action: poweron
+
+- name: Activate a IBMi logical partition with user defined keylock and iIPLsource options
+  powervm_lpar_instance:
+      hmc_host: '{{ inventory_hostname }}'
+      hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+      system_name: <system_name>
+      vm_name: <vm_name>
+      keylock: 'norm'
+      iIPLsource: 'd'
+      action: poweron
+
 '''
 
 RETURN = '''
@@ -202,12 +246,21 @@ def validate_proc_mem(system_dom, proc, mem):
 
 def validate_parameters(params):
     '''Check that the input parameters satisfy the mutual exclusiveness of HMC'''
-    if params['state'] == 'present':
-        mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'vm_name', 'os_type']
-        unsupportedList = []
+    opr = None
+    if params['state'] is not None:
+        opr = params['state']
     else:
+        opr = params['action']
+
+    if opr == 'present':
+        mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'vm_name', 'os_type']
+        unsupportedList = ['prof_name', 'keylock', 'iIPLsource']
+    elif opr == 'poweron':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'vm_name']
         unsupportedList = ['proc', 'mem', 'os_type']
+    else:
+        mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'vm_name']
+        unsupportedList = ['proc', 'mem', 'os_type', 'prof_name', 'keylock', 'iIPLsource']
 
     collate = []
     for eachMandatory in mandatoryList:
@@ -411,6 +464,7 @@ def remove_partition(module, params):
 
     return changed, None
 
+
 def poweroff_partition(module, params):
     changed = False
     rest_conn = None
@@ -432,7 +486,7 @@ def poweroff_partition(module, params):
     try:
         system_uuid, server_dom = rest_conn.getManagedSystem(system_name)
         if not system_uuid:
-           module.fail_json(msg="Given system is not present")
+            module.fail_json(msg="Given system is not present")
 
         lpar_response = rest_conn.getLogicalPartitionsQuick(system_uuid)
         if lpar_response:
@@ -446,16 +500,119 @@ def poweroff_partition(module, params):
                     break
 
         if not lpar_uuid:
-           module.fail_json(msg="Given Logical Partition is not present on given system")
+            module.fail_json(msg="Given Logical Partition is not present on given system")
 
         partition_state = partition_dict["PartitionState"]
 
         if partition_state == 'not activated':
-           logger.debug("Given partition already in not activated state")
-           return False, None
+            logger.debug("Given partition already in not activated state")
+            return False, None
         else:
-           rest_conn.poweroffPartition(lpar_uuid, 'shutdown')
-           changed = True
+            resp_dom = rest_conn.poweroffPartition(lpar_uuid, 'shutdown')
+            return_code = resp_dom.xpath("//ParameterName[text()='returnCode']/following-sibling::ParameterValue")[0].text
+            if return_code == '0':
+                changed = True
+            else:
+                resp_result = resp_dom.xpath("//ParameterName[text()='result']/following-sibling::ParameterValue")[0].text
+                module.fail_json(msg=resp_result)
+
+    except Exception as error:
+        error_msg = parse_error_response(error)
+        logger.debug("Line number: %d exception: %s", sys.exc_info()[2].tb_lineno, repr(error))
+        module.fail_json(msg=error_msg)
+    finally:
+        try:
+            rest_conn.logoff()
+        except Exception as logoff_error:
+            error_msg = parse_error_response(logoff_error)
+            module.warn(error_msg)
+
+    return changed, None
+
+
+def poweron_partition(module, params):
+    changed = False
+    rest_conn = None
+    system_uuid = None
+    lpar_uuid = None
+    prof_uuid = None
+    validate_parameters(params)
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    system_name = params['system_name']
+    vm_name = params['vm_name']
+    prof_name = params['prof_name']
+    keylock = params['keylock']
+    iIPLsource = params['iIPLsource']
+
+    try:
+        rest_conn = HmcRestClient(hmc_host, hmc_user, password)
+    except Exception as error:
+        logger.debug(repr(error))
+        module.fail_json(msg="Logon to HMC failed")
+
+    try:
+        system_uuid, server_dom = rest_conn.getManagedSystem(system_name)
+        if not system_uuid:
+            module.fail_json(msg="Given system is not present")
+
+        lpar_response = rest_conn.getLogicalPartitionsQuick(system_uuid)
+        if lpar_response:
+            lpar_quick_list = json.loads(rest_conn.getLogicalPartitionsQuick(system_uuid))
+
+        if lpar_quick_list:
+            for eachLpar in lpar_quick_list:
+                if eachLpar['PartitionName'] == vm_name:
+                    partition_dict = eachLpar
+                    lpar_uuid = eachLpar['UUID']
+                    break
+
+        if not lpar_uuid:
+            module.fail_json(msg="Given Logical Partition is not present on given system")
+
+        if prof_name:
+            doc = rest_conn.getPartitionProfiles(lpar_uuid)
+            profs = doc.xpath('//entry')
+            for prof in profs:
+                prof1 = etree.ElementTree(prof)
+                pro_nam = prof1.xpath('//ProfileName/text()')[0]
+                if prof_name == pro_nam:
+                    prof_uuid = prof1.xpath('//id/text()')[0]
+                    logger.debug(prof_uuid)
+                    break
+
+        logger.debug(prof_uuid)
+        if prof_name and not prof_uuid:
+            module.fail_json(msg="Given Logical Partition Profile is not present on given logical Partition")
+
+        partition_state = partition_dict["PartitionState"]
+        partition_type = partition_dict["PartitionType"]
+
+        if partition_state == 'not activated':
+            warn_msg = 'unsupported parameter iIPLsource passed to a partition type: '
+            if partition_type != 'OS400' and iIPLsource:
+                module.warn(warn_msg + partition_type)
+            rest_conn.poweronPartition(lpar_uuid, prof_uuid, keylock, iIPLsource, partition_type)
+            changed = True
+        else:
+            logger.debug("Given partition already in not activated state")
+            return False, None
+
+    except HmcError as hmcerr:
+        err_msg = parse_error_response(hmcerr)
+        if partition_type == 'OS400':
+            resp_dict = json.loads(rest_conn.getLogicalPartitionQuick(lpar_uuid))
+            ibmi_partition_state = resp_dict["PartitionState"]
+            if ibmi_partition_state == 'error':
+                module.warn(err_msg)
+                changed = True
+            else:
+                logger.debug("Line number: %d exception: %s", sys.exc_info()[2].tb_lineno, repr(hmcerr))
+                module.fail_json(msg=err_msg)
+        else:
+            logger.debug("Line number: %d exception: %s", sys.exc_info()[2].tb_lineno, repr(hmcerr))
+            module.fail_json(msg=err_msg)
 
     except Exception as error:
         error_msg = parse_error_response(error)
@@ -476,11 +633,12 @@ def perform_task(module):
     actions = {
         "present": create_partition,
         "absent": remove_partition,
-        "shutdown" : poweroff_partition
+        "shutdown": poweroff_partition,
+        "poweron": poweron_partition
     }
 
     oper = 'state'
-    if params['state'] == None:
+    if params['state'] is None:
         oper = 'action'
 
     try:
@@ -507,10 +665,13 @@ def run_module():
         proc=dict(type='int'),
         mem=dict(type='int'),
         os_type=dict(type='str', choices=['aix', 'linux', 'aix_linux', 'ibmi']),
+        prof_name=dict(type='str'),
+        keylock=dict(type='str', choices=['manual', 'norm']),
+        iIPLsource=dict(type='str', choices=['a', 'b', 'c', 'd']),
         state=dict(type='str',
                    choices=['present', 'absent']),
         action=dict(type='str',
-                    choices=['shutdown'])
+                    choices=['shutdown', 'poweron'])
     )
 
     module = AnsibleModule(
@@ -519,7 +680,8 @@ def run_module():
         required_one_of=[('state', 'action')],
         required_if=[['state', 'absent', ['hmc_host', 'hmc_auth', 'system_name', 'vm_name']],
                      ['state', 'present', ['hmc_host', 'hmc_auth', 'system_name', 'vm_name', 'os_type']],
-                     ['action', 'shutdown', ['hmc_host', 'hmc_auth', 'system_name', 'vm_name']]
+                     ['action', 'shutdown', ['hmc_host', 'hmc_auth', 'system_name', 'vm_name']],
+                     ['action', 'poweron', ['hmc_host', 'hmc_auth', 'system_name', 'vm_name']]
                      ]
 
 
