@@ -384,7 +384,6 @@ class HmcRestClient:
         if resp.code != 200:
             logger.debug("Get of Logical Partitions failed. Respsonse code: %d", resp.code)
             return None
-        logger.debug(type(resp))
         response = resp.read()
         return response
 
