@@ -243,9 +243,17 @@ class HmcRestClient:
 
             if jobStatus == 'COMPLETED_WITH_ERROR':
                 logger.debug("jobStatus: %s", jobStatus)
-                resp_msg = doc.xpath("//ParameterName[text()='result']/following-sibling::ParameterValue")[0].text
-
-                raise HmcError(resp_msg)
+                resp_msg = None
+                resp_msg = doc.xpath("//ParameterName[text()='result']/following-sibling::ParameterValue")
+                if resp_msg:
+                    logger.debug("debugger: " + resp_msg[0].text)
+                    raise HmcError(resp_msg[0].text)
+                else:
+                    if ignoreSearch:
+                        result = doc
+                    else:
+                        result = doc.xpath("//ParameterValue")[3].text
+                    break
 
             if jobStatus != 'RUNNING':
                 logger.debug("jobStatus: %s", jobStatus)
@@ -268,14 +276,12 @@ class HmcRestClient:
         url = "https://{0}/rest/api/uom/ManagedSystem/search/(SystemName=={1})".format(self.hmc_ip, system_name)
         header = {'X-API-Session': self.session,
                   'Accept': 'application/vnd.ibm.powervm.uom+xml; type=ManagedSystem'}
-
         response = open_url(url,
                             headers=header,
                             method='GET',
                             validate_certs=False,
                             force_basic_auth=True,
                             timeout=60)
-
         if response.code == 204:
             return None, None
 
@@ -710,6 +716,8 @@ class HmcRestClient:
             jobParams.update({'LogicalPartitionProfile': prof_uuid})
 
         if keylock:
+            if keylock == 'normal':
+                keylock = 'norm'
             jobParams.update({'keylock': keylock})
 
         if os_type == 'OS400' and iIPLsource:

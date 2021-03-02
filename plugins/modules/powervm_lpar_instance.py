@@ -488,6 +488,9 @@ def poweroff_partition(module, params):
         system_uuid, server_dom = rest_conn.getManagedSystem(system_name)
         if not system_uuid:
             module.fail_json(msg="Given system is not present")
+        ms_state = server_dom.xpath("//DetailedState")[0].text
+        if ms_state != 'None':
+            module.fail_json(msg="Given system is in " + ms_state + " state")
 
         lpar_response = rest_conn.getLogicalPartitionsQuick(system_uuid)
         if lpar_response is not None:
@@ -553,6 +556,9 @@ def poweron_partition(module, params):
         system_uuid, server_dom = rest_conn.getManagedSystem(system_name)
         if not system_uuid:
             module.fail_json(msg="Given system is not present")
+        ms_state = server_dom.xpath("//DetailedState")[0].text
+        if ms_state != 'None':
+            module.fail_json(msg="Given system is in " + ms_state + " state")
 
         lpar_response = rest_conn.getLogicalPartitionsQuick(system_uuid)
         if lpar_response is not None:
@@ -659,7 +665,7 @@ def run_module():
         mem=dict(type='int'),
         os_type=dict(type='str', choices=['aix', 'linux', 'aix_linux', 'ibmi']),
         prof_name=dict(type='str'),
-        keylock=dict(type='str', choices=['manual', 'norm']),
+        keylock=dict(type='str', choices=['manual', 'normal']),
         iIPLsource=dict(type='str', choices=['a', 'b', 'c', 'd']),
         state=dict(type='str',
                    choices=['present', 'absent']),
