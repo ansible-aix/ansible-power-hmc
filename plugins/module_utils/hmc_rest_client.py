@@ -249,11 +249,8 @@ class HmcRestClient:
                     logger.debug("debugger: " + resp_msg[0].text)
                     raise HmcError(resp_msg[0].text)
                 else:
-                    if ignoreSearch:
-                        result = doc
-                    else:
-                        result = doc.xpath("//ParameterValue")[3].text
-                    break
+                    err_msg = "Failed: Job completed with error"
+                    raise HmcError(err_msg)
 
             if jobStatus != 'RUNNING':
                 logger.debug("jobStatus: %s", jobStatus)
