@@ -89,7 +89,7 @@ options:
             - The keylock position to set.
             - If user doesn't provide this option, current settings of this option in partition will be considered.
         type: str
-        choices: ['manual', 'norm']
+        choices: ['manual', 'normal']
     iIPLsource:
         description:
             - The inital program load (IPL) source to use when activating an IBMi partition.
@@ -101,13 +101,14 @@ options:
         description:
             - C(present) creates a partition of specifed I(os_type), I(vm_name), I(proc) and I(memory) on specified I(system_name)
             - C(absent) deletes a partition of specified I(vm_name) on specified I(system_name)
-        required: true
         type: str
         choices: ['present', 'absent']
     action:
         description:
             - C(shutdown) shutdown a partition of specified I(vm_name) on specified I(system_name)
             - C(poweron) poweron a partition of specified I(vm_name) with spefified I(prof_name), I(keylock), I(iIPLsource) on specified I(system_name)
+        type: str
+        choices: ['poweron', 'shutdown']
 '''
 
 EXAMPLES = '''
