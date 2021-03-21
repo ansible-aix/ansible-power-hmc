@@ -1,8 +1,8 @@
 .. _powervm_lpar_instance_module:
 
 
-powervm_lpar_instance -- Create/Delete an AIX/Linux or IBMi partition
-=====================================================================
+powervm_lpar_instance -- Create, Delete and shutdown an AIX/Linux or IBMi partition
+===================================================================================
 
 .. contents::
    :local:
@@ -15,6 +15,10 @@ Synopsis
 Creates AIX/Linux or IBMi partition with specified configuration details on mentioned system
 
 Or Deletes specified AIX/Linux or IBMi partition on specified system
+
+Or Shutdown specified AIX/Linux or IBMi partition on specified system
+
+Or Poweron/Activate specified AIX/Linux or IBMi partition with provided configuration details on the mentioned system
 
 
 
@@ -74,10 +78,36 @@ Parameters
     ``ibmi`` for IBMi operating system
 
 
-  state (True, str, None)
+  prof_name (optional, str, None)
+    Partition profile needs to be used to activate
+
+    If user doesn't provide this option, current configureation of partition will be used for activation
+
+
+  keylock (optional, str, None)
+    The keylock position to set.
+
+    If user doesn't provide this option, current settings of this option in partition will be considered.
+
+
+  iIPLsource (optional, str, None)
+    The inital program load (IPL) source to use when activating an IBMi partition.
+
+    If user doesn't provide this option, current setting of this option in partition will be considered.
+
+    If this option provided to AIX/Linux type partition, operation gives a warning and then ignores this option and proceed with operation.
+
+
+  state (optional, str, None)
     ``present`` creates a partition of specifed *os_type*, *vm_name*, *proc* and *memory* on specified *system_name*
 
     ``absent`` deletes a partition of specified *vm_name* on specified *system_name*
+
+
+  action (optional, str, None)
+    ``shutdown`` shutdown a partition of specified *vm_name* on specified *system_name*
+
+    ``poweron`` poweron a partition of specified *vm_name* with spefified *prof_name*, *keylock*, *iIPLsource* on specified *system_name*
 
 
 
@@ -132,6 +162,40 @@ Examples
           vm_name: <vm_name>
           state: absent
 
+    - name: Shutdown a logical partition
+      powervm_lpar_instance:
+          hmc_host: '{{ inventory_hostname }}'
+          hmc_auth:
+             username: '{{ ansible_user }}'
+             password: '{{ hmc_password }}'
+          system_name: <system_name>
+          vm_name: <vm_name>
+          action: shutdown
+
+    - name: Activate a AIX/Linux logical partition with user defined profile_name
+      powervm_lpar_instance:
+          hmc_host: '{{ inventory_hostname }}'
+          hmc_auth:
+             username: '{{ ansible_user }}'
+             password: '{{ hmc_password }}'
+          system_name: <system_name>
+          vm_name: <vm_name>
+          prof_name: <profile_name>
+          action: poweron
+
+    - name: Activate IBMi based on its current configuration with keylock and iIPLsource options
+      powervm_lpar_instance:
+          hmc_host: '{{ inventory_hostname }}'
+          hmc_auth:
+             username: '{{ ansible_user }}'
+             password: '{{ hmc_password }}'
+          system_name: <system_name>
+          vm_name: <vm_name>
+          keylock: 'norm'
+          iIPLsource: 'd'
+          action: poweron
+
+
 
 
 Return Values
@@ -161,4 +225,5 @@ Authors
 ~~~~~~~
 
 - Anil Vijayan (@AnilVijayan)
+- Navinakumar Kandakur (@nkandak1)
 
