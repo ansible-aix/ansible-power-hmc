@@ -61,7 +61,13 @@ Parameters
   proc (optional, int, None)
     The number of dedicated processors to create partition.
 
-    Default value is 2.
+    If ``proc_unit`` parameter is set, then this value will work as Virtual Processors for shared processor setting
+
+    Default value is 2. This will not work during shared processor setting
+
+
+  proc_unit (optional, float, None)
+    The number of shared processing units to create partition.
 
 
   mem (optional, int, None)
@@ -96,6 +102,27 @@ Parameters
     If user doesn't provide this option, current setting of this option in partition will be considered.
 
     If this option provided to AIX/Linux type partition, operation gives a warning and then ignores this option and proceed with operation.
+
+
+  volume_config (optional, dict, None)
+    Storage volume configurations of partition
+
+    Attachs the virtual SCSI backing physical volume provided by the Virtual IO Server Partition
+
+    Give implicit preference to redundancy in case if the identified/provided disk visible by two VIOSes
+
+
+    volume_name (optional, str, None)
+      Physical volume name visible through vios This option is mutually exclusive with *volume_size*
+
+
+    volume_size (optional, int, None)
+      Physical volume size in MB
+
+
+    vios_name (optional, str, None)
+      Vios name to which mentioned *volume_name* is present This option is mutually exclusive with *volume_size*
+
 
 
   state (optional, str, None)
