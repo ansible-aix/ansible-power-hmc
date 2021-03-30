@@ -107,7 +107,7 @@ Parameters
   volume_config (optional, dict, None)
     Storage volume configurations of partition
 
-    Attachs the virtual SCSI backing physical volume provided by the Virtual IO Server Partition
+    Attaches the virtual SCSI backing physical volume provided by the Virtual IO Server Partition
 
     Give implicit preference to redundancy in case if the identified/provided disk visible by two VIOSes
 
@@ -123,6 +123,10 @@ Parameters
     vios_name (optional, str, None)
       Vios name to which mentioned *volume_name* is present This option is mutually exclusive with *volume_size*
 
+
+
+  virt_network_name (optional, str, None)
+    Virtual Network Configuration of the Partition
 
 
   state (optional, str, None)
