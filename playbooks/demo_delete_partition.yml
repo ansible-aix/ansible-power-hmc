@@ -1,0 +1,18 @@
+---
+- name: HMC delete partition
+  hosts: hmcs
+  collections:
+      - ibm.power_hmc
+  connection: local
+  vars:
+    curr_hmc_auth:
+      username: hscroot 
+  
+  tasks:
+  - name: Delete logical partition
+    powervm_lpar_instance:
+      hmc_host: '{{ inventory_hostname }}'
+      hmc_auth: "{{ curr_hmc_auth }}"
+      system_name: HV4 
+      vm_name: testlpar3
+      state: absent
