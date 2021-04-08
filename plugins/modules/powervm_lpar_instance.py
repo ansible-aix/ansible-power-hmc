@@ -76,6 +76,17 @@ options:
             - C(ibmi) for IBMi operating system
         type: str
         choices: ['aix','linux','aix_linux','ibmi']
+    retain_vios_cfg:
+        description:
+            - Do not remove the VIOS configuration like server adapters, storage mappings associated with the partition when deleting the partition
+            - Applicable only for delete
+            - Default is to remove the associated VIOS configuration when deletin the partition
+        type: bool
+    delete_vdisks:
+        description:
+            - Option to delete the Virtual Disks assoicated with the partition when deleting the partition
+            - Default is to not delete the virtual disks
+        type: bool
     state:
         description:
             - C(present) creates a partition of specifed I(os_type), I(vm_name), I(proc) and I(memory) on specified I(system_name)
@@ -188,7 +199,7 @@ def validate_parameters(params):
     '''Check that the input parameters satisfy the mutual exclusiveness of HMC'''
     if params['state'] == 'present':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'vm_name', 'os_type']
-        unsupportedList = []
+        unsupportedList = ['retain_vios_cfg', 'delete_vdisks']
     else:
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'vm_name']
         unsupportedList = ['proc', 'mem', 'os_type']
@@ -355,7 +366,15 @@ def remove_partition(module, params):
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
 
-    hmc.deletePartition(system_name, vm_name, not(retainViosCfg), deleteVdisks)    
+    try:
+        hmc.deletePartition(system_name, vm_name, not(retainViosCfg), deleteVdisks)
+    except HmcError as del_lpar_error:
+        error_msg = parse_error_response(del_lpar_error)
+        if 'HSCL8012' in error_msg:
+            return False,None
+        else:
+            raise            
+
     return True, None
 
 

@@ -15,4 +15,5 @@
       hmc_auth: "{{ curr_hmc_auth }}"
       system_name: HV4 
       vm_name: testlpar3
+      delete_vdisks: True
       state: absent
