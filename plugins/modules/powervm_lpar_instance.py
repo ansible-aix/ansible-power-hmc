@@ -80,11 +80,11 @@ options:
         description:
             - Do not remove the VIOS configuration like server adapters, storage mappings associated with the partition when deleting the partition
             - Applicable only for delete
-            - Default is to remove the associated VIOS configuration when deletin the partition
+            - Default is to remove the associated VIOS configuration when deleting the partition
         type: bool
     delete_vdisks:
         description:
-            - Option to delete the Virtual Disks assoicated with the partition when deleting the partition
+            - Option to delete the Virtual Disks associated with the partition when deleting the partition
             - Default is to not delete the virtual disks
         type: bool
     state:
